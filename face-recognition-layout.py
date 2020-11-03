@@ -67,13 +67,16 @@ class Window(QDialog):
         self.initCameraBox()
         vbox.addWidget(self.cameraGroupBox)
         self.setLayout(vbox)
+        self.setStyleSheet("background-color :#89ABE3FF")
+
         self.show()
 
     def SelectClassLayout(self):
         self.groupbox = QGroupBox()
         hboxlayout = QHBoxLayout()
 
-        label = QLabel("Select class")
+        label = QLabel("                     Select class")
+        label.setStyleSheet("background-color :#FCF6F5FF")
         label.setMinimumHeight(40)
         hboxlayout.addWidget(label)
 
@@ -83,7 +86,7 @@ class Window(QDialog):
         numOfClasses = len(classes)
         for c in classes:
             self.comboBox.addItem(c)
-
+        self.comboBox.setStyleSheet("background-color :#FCF6F5FF")
         self.comboBox.setMinimumHeight(40)
 
         hboxlayout.addWidget(self.comboBox)
@@ -96,18 +99,21 @@ class Window(QDialog):
         addstudentButton = QPushButton("add new student")
         addstudentButton.setToolTip("click here to add new student to selected class")
         addstudentButton.setMinimumHeight(40)
+        addstudentButton.setStyleSheet("background-color :#FCF6F5FF")
         addstudentButton.clicked.connect(self.addnewStudent)
         hboxlayout.addWidget(addstudentButton)
 
         addnewclassbutton = QPushButton("add new class")
         addnewclassbutton.setToolTip("click here to add a new class")
         addnewclassbutton.setMaximumHeight(40)
+        addnewclassbutton.setStyleSheet("background-color :#FCF6F5FF")
         addnewclassbutton.clicked.connect(self.addnewClass)
         hboxlayout.addWidget(addnewclassbutton)
 
         self.startattendenceButton = QPushButton("Start Attendance session")
         self.startattendenceButton.setToolTip("Start Attendance session for selected class")
         self.startattendenceButton.setMinimumHeight(40)
+        self.startattendenceButton.setStyleSheet("background-color :#FCF6F5FF")
         self.startattendenceButton.clicked.connect(self.StartAttendenceSession)
         hboxlayout.addWidget(self.startattendenceButton)
 
@@ -137,6 +143,7 @@ class Window(QDialog):
         self.tableWidget.horizontalHeader().setStretchLastSection(True)
         self.tableWidget.horizontalHeader().setSectionResizeMode(
             QHeaderView.Stretch)
+        self.tableWidget.setStyleSheet("background-color :#FCF6F5FF")
 
     def initCameraBox(self):
         camerabuttonLayout = QHBoxLayout()
@@ -147,6 +154,7 @@ class Window(QDialog):
         self.exportToExcelButton.setMinimumHeight(40)
         self.exportToExcelButton.clicked.connect(self.Exporttoexcel)
         self.exportToExcelButton.setIcon(QtGui.QIcon("resorces/excel.png"))
+        self.exportToExcelButton.setStyleSheet("background-color :#FCF6F5FF")
         camerabuttonLayout.addWidget(self.exportToExcelButton)
 
         self.exportToDataBaseButton = QPushButton("Export to DataBase")
@@ -154,6 +162,7 @@ class Window(QDialog):
         self.exportToDataBaseButton.setIcon(QtGui.QIcon("resorces/database.png"))
         camerabuttonLayout.addWidget(self.exportToDataBaseButton)
         self.exportToDataBaseButton.clicked.connect(self.exportToMysql)
+        self.exportToDataBaseButton.setStyleSheet("background-color :#FCF6F5FF")
         camreraButtonBox.setMaximumHeight(50)
         camreraButtonBox.setLayout(camerabuttonLayout)
         camerahboxlayout.addWidget(camreraButtonBox)
@@ -165,6 +174,7 @@ class Window(QDialog):
         self.eventlogsbox = QLineEdit()
         self.eventlogsbox.setMaximumHeight(20)
         self.eventlogsbox.setText("Welcome, this is where you will see event logs")
+        self.eventlogsbox.setStyleSheet("background-color :#FCF6F5FF")
         camerahboxlayout.addWidget(self.eventlogsbox)
 
         self.cameraGroupBox.setLayout(camerahboxlayout)
@@ -172,7 +182,7 @@ class Window(QDialog):
     def StartAttendenceSession(self):
         if not self.isAttendance:
             self.isAttendance = True
-
+            self.startattendenceButton.setStyleSheet("background-color : red")
             self.startattendenceButton.setText("stop Attendance session")
             print("clicked")
             studentImages = []
@@ -293,6 +303,7 @@ class Window(QDialog):
             self.cap.release()
             self.cameraoutput.clear()
             self.startattendenceButton.setText("Start Attendance session")
+            self.startattendenceButton.setStyleSheet("background-color :#FCF6F5FF")
 
     def Exporttoexcel(self):
         i = 0
@@ -335,71 +346,25 @@ class Window(QDialog):
             workbook.close()
 
     def exportToMysql(self):
-        print("here")
-        protoPath = os.path.sep.join(["my-liveness-detection", "face_detector", "deploy.prototxt"])
-        modelPath = os.path.sep.join(["my-liveness-detection", "face_detector",
-                                      "res10_300x300_ssd_iter_140000.caffemodel"])
-        net = cv2.dnn.readNetFromCaffe(protoPath, modelPath)
+        pass
 
-        # load the liveness detector model and label encoder from disk
-        try:
-            print("[INFO] loading liveness detector...")
-            model = load_model("my-liveness-detection/liveness.model")
-            le = pickle.loads(open("my-liveness-detection/le.pickle", "rb").read())
+        #here goes the fuction to save stuff to mysql database
 
-        except Exception as e:
-            print(e.msg)
-        # initialize the video stream and allow the camera sensor to warmup
-        print("[INFO] starting video stream...")
 
-        # loop over the frames from the video stream
-        while True:
-            success, frame = self.cap.read()
-            frame = imutils.resize(frame, width=600)
-            blob = cv2.dnn.blobFromImage(cv2.resize(frame, (300, 300)), 1.0,
-                                         (300, 300), (104.0, 177.0, 123.0))
 
-            # grab the frame dimensions and convert it to a blob
-            (h, w) = frame.shape[:2]
-            blob = cv2.dnn.blobFromImage(cv2.resize(frame, (300, 300)), 1.0,
-                                         (300, 300), (104.0, 177.0, 123.0))
 
-            # pass the blob through the network and obtain the detections and
-            # predictions
-            net.setInput(blob)
-            detections = net.forward()
 
-            # loop over the detections
-            for i in range(0, detections.shape[2]):
-                # extract the confidence (i.e., probability) associated with the
-                # prediction
-                confidence = detections[0, 0, i, 2]
-                # filter out weak detections
-                if confidence > 0.5:
-                    # compute the (x, y)-coordinates of the bounding box for
-                    # the face and extract the face ROI
-                    box = detections[0, 0, i, 3:7] * np.array([w, h, w, h])
-                    (startX, startY, endX, endY) = box.astype("int")
-                    # ensure the detected bounding box does fall outside the
-                    # dimensions of the frame
-                    startX = max(0, startX)
-                    startY = max(0, startY)
-                    endX = min(w, endX)
-                    endY = min(h, endY)
-                    # extract the face ROI and then preproces it in the exact
-                    # same manner as our training data
-                    face = frame[startY:endY, startX:endX]
-                    face = cv2.resize(face, (32, 32))
-                    face = face.astype("float") / 255.0
-                    face = img_to_array(face)
-                    face = np.expand_dims(face, axis=0)
-                    # pass the face ROI through the trained liveness detector
-                    # model to determine if the face is "real" or "fake"
-                    preds = model.predict(face)[0]
-                    j = np.argmax(preds)
-                    label = le.classes_[j]
-                    print(label)
-            print("sucsess")
+
+
+
+
+
+
+
+
+
+
+
 
     def addnewStudent(self):
         self.isnameentered = False
@@ -409,6 +374,7 @@ class Window(QDialog):
         self.dialog.setModal(True)
         self.dialog.setWindowTitle("add a new Student")
         self.dialog.setGeometry(350, 350, 500, 500)
+        self.dialog.setStyleSheet("background-color :#89ABE3FF")
 
         addnewstudnetBackground = QImage("resorces/add_student_background.jpg")
         simage = addnewstudnetBackground.scaled(QSize(self.dialog.width(), self.dialog.height()))
@@ -425,34 +391,41 @@ class Window(QDialog):
         self.selectClass.setMinimumHeight(40)
         self.selectClass.setMinimumWidth(60)
         self.selectClass.move(200, 50)
+        self.selectClass.setStyleSheet("background-color :#FCF6F5FF")
 
         namelable = QLabel("Enter Student Name below", self.dialog)
         namelable.setMinimumWidth(100)
         namelable.setMinimumHeight(40)
         namelable.move(175, 125)
+        namelable.setStyleSheet("background-color :#FCF6F5FF")
 
         self.nametextbox = QLineEdit(self.dialog)
         self.nametextbox.setMinimumWidth(200)
         self.nametextbox.move(150, 175)
+        self.nametextbox.setStyleSheet("background-color :#FCF6F5FF")
 
         chooseStudentImageLable = QLabel("select student Image", self.dialog)
         chooseStudentImageLable.setMinimumHeight(40)
         chooseStudentImageLable.move(200, 200)
+        chooseStudentImageLable.setStyleSheet("background-color :#FCF6F5FF")
 
         chooseImageButton = QPushButton("Choose Image", self.dialog)
         chooseImageButton.setMinimumHeight(40)
         chooseImageButton.move(200, 250)
         chooseImageButton.clicked.connect(self.chooseImage)
+        chooseImageButton.setStyleSheet("background-color :#FCF6F5FF")
 
         self.imageNameLable = QLabel("no Image selected", self.dialog)
         self.imageNameLable.setMinimumHeight(40)
         self.imageNameLable.setMinimumWidth(300)
         self.imageNameLable.move(100, 300)
+        self.imageNameLable.setStyleSheet("background-color :#FCF6F5FF")
 
         saveStudentButton = QPushButton("Save Student", self.dialog)
         saveStudentButton.setMinimumHeight(40)
         saveStudentButton.move(200, 400)
         saveStudentButton.clicked.connect(self.savenewstudent)
+        saveStudentButton.setStyleSheet("background-color :#FCF6F5FF")
 
         self.dialog.exec_()
 
@@ -462,15 +435,18 @@ class Window(QDialog):
         self.classdialog.setModal(True)
         self.classdialog.setWindowTitle("add a new Student")
         self.classdialog.setGeometry(350, 350, 500, 300)
+        self.classdialog.setStyleSheet("background-color :#89ABE3FF")
 
         self.classnametextbox = QLineEdit(self.classdialog)
         self.classnametextbox.setMinimumWidth(300)
         self.classnametextbox.move(100, 75)
+        self.classnametextbox.setStyleSheet("background-color :#FCF6F5FF")
 
         addclassbutton = QPushButton("add new class", self.classdialog)
         addclassbutton.setMinimumWidth(100)
         addclassbutton.clicked.connect(self.createnewclass)
         addclassbutton.move(200, 150)
+        addclassbutton.setStyleSheet("background-color :#FCF6F5FF")
 
         self.classdialog.exec_()
 
