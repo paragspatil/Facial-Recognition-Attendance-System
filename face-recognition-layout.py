@@ -3,10 +3,10 @@ import sys
 from datetime import datetime
 from shutil import copyfile
 
-import cv2
+
 import face_recognition
-import mysql.connector
-import numpy as np
+
+
 import xlsxwriter
 from PyQt5.QtCore import QSize
 from PyQt5.QtGui import QImage
@@ -16,7 +16,7 @@ from PyQt5.QtWidgets import QApplication, QPushButton, QDialog, QGroupBox, QHBox
     QLabel, QTableWidgetItem, QTableWidget, QHeaderView, QComboBox, QLineEdit, QFileDialog, QMenuBar
 
 from ui_main_window import *
-from imutils.video import VideoStream
+
 from tensorflow.keras.preprocessing.image import img_to_array
 from tensorflow.keras.models import load_model
 import numpy as np
