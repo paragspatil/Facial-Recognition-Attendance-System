@@ -20,10 +20,10 @@ from ui_main_window import *
 from tensorflow.keras.preprocessing.image import img_to_array
 from tensorflow.keras.models import load_model
 import numpy as np
-import argparse
+
 import imutils
 import pickle
-import time
+
 import cv2
 
 
@@ -209,8 +209,6 @@ class Window(QDialog):
                 self.timeRecorded.append("not recorded")
                 i = i + 1
 
-
-
             # code for fake and real person detection
             net = cv2.dnn.readNetFromCaffe(self.protoPath, self.modelPath)
 
@@ -276,10 +274,11 @@ class Window(QDialog):
                         preds = model.predict(face)[0]
                         j = np.argmax(preds)
                         label = le.classes_[j]
-                        #print(label)
+                        # print(label)
 
                         if label == "fake":
-                            self.eventlogsbox.setText("dont cheat attendance; serious action will be taken")
+                            self.eventlogsbox.setText("don't cheat attendance; serious action will be taken")
+
 
                         elif label == "real":
                             for encodeface, faceLoc in zip(encodecurrentframe, facecurrentframe):
@@ -288,7 +287,7 @@ class Window(QDialog):
                                 matchIndex = np.argmin(faceDis)
 
                                 if matches[matchIndex]:
-                                    #print(self.listOfstudents[matchIndex])
+                                    # print(self.listOfstudents[matchIndex])
                                     self.tableWidget.setItem(matchIndex, 2, QTableWidgetItem("Present"))
                                     now = datetime.now()
                                     dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
@@ -348,23 +347,7 @@ class Window(QDialog):
     def exportToMysql(self):
         pass
 
-        #here goes the fuction to save stuff to mysql database
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+        # here goes the fuction to save stuff to mysql database
 
     def addnewStudent(self):
         self.isnameentered = False
