@@ -5,7 +5,7 @@ from shutil import copyfile
 
 
 import face_recognition
-
+from threading import *
 
 import xlsxwriter
 from PyQt5.QtCore import QSize
