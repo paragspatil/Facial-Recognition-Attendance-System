@@ -11,7 +11,7 @@ from email.mime.base import MIMEBase
 from email import encoders
 import face_recognition
 from threading import *
-
+import winsound
 from mysql import connector
 import xlsxwriter
 from PyQt5.QtCore import QSize
@@ -190,6 +190,7 @@ class Window(QDialog):
     def StartAttendenceSession(self):
         if not self.isAttendance:
             self.isAttendance = True
+            fakeCount = 0
             self.startattendenceButton.setStyleSheet("background-color : red")
             self.startattendenceButton.setText("stop Attendance session")
             print("clicked")
@@ -285,9 +286,14 @@ class Window(QDialog):
 
                         if label == "fake":
                             self.eventlogsbox.setText("don't cheat attendance; serious action will be taken")
-
+                            fakeCount += 1
+                            if fakeCount > 6:
+                                frequency = 2500  # Set Frequency To 2500 Hertz
+                                duration = 2000  # Set Duration To 1000 ms == 1 second
+                                winsound.Beep(frequency, duration)
 
                         elif label == "real":
+                            fakeCount = 0
                             for encodeface, faceLoc in zip(encodecurrentframe, facecurrentframe):
                                 matches = face_recognition.compare_faces(studentImagesEncodings, encodeface)
                                 faceDis = face_recognition.face_distance(studentImagesEncodings, encodeface)
@@ -465,7 +471,7 @@ class Window(QDialog):
         self.classdialog = QDialog()
         self.classdialog.setWindowIcon(QtGui.QIcon(self.IconName))
         self.classdialog.setModal(True)
-        self.classdialog.setWindowTitle("add a new Student")
+        self.classdialog.setWindowTitle("add a new class")
         self.classdialog.setGeometry(350, 350, 500, 300)
         self.classdialog.setStyleSheet("background-color :#89ABE3FF")
 
@@ -568,7 +574,7 @@ class Window(QDialog):
         self.excelRecordDialog.setWindowIcon(QtGui.QIcon(self.IconName))
         self.excelRecordDialog.setModal(True)
         self.excelRecordDialog.setWindowTitle("select attendance record")
-        self.excelRecordDialog.setGeometry(500, 500, 500, 500)
+        self.excelRecordDialog.setGeometry(500, 500, 500, 300)
         self.excelRecordDialog.setStyleSheet("background-color :#89ABE3FF")
 
         path = "classes/" + self.comboBox.currentText() + "/attendence recods/"
@@ -591,7 +597,6 @@ class Window(QDialog):
 
         sendEmailButton = QPushButton("send me an email", self.excelRecordDialog)
         sendEmailButton.setMinimumWidth(300)
-        sendEmailButton.clicked.connect(self.accessMysqlRecords)
         sendEmailButton.move(100, 150)
         sendEmailButton.setStyleSheet("background-color :#FCF6F5FF")
         sendEmailButton.clicked.connect(self.sendexcelEmail)
@@ -600,12 +605,172 @@ class Window(QDialog):
 
     def accessMysqlRecords(self):
         self.chooserecordDialog.close()
+        try:
+            self.mySQLRecordDialog = QDialog()
+            self.mySQLRecordDialog.setWindowIcon(QtGui.QIcon(self.IconName))
+            self.mySQLRecordDialog.setModal(True)
+            self.mySQLRecordDialog.setWindowTitle("select attendance record")
+            self.mySQLRecordDialog.setGeometry(500, 500, 500, 300)
+            self.mySQLRecordDialog.setStyleSheet("background-color :#89ABE3FF")
+
+            path = "classes/" + self.comboBox.currentText() + "/attendence recods/"
+
+            self.mySQLcombo = QComboBox(self.mySQLRecordDialog)
+            self.mySQLcombo.setToolTip("select Record")
+            self.mySQLcombo.setMinimumWidth(300)
+            self.mySQLcombo.move(100, 50)
+            self.mySQLcombo.setStyleSheet("background-color :#FCF6F5FF")
+
+            db = connector.connect(
+                host="localhost",
+                user="root",
+                passwd="dbms",
+                database=self.comboBox.currentText()
+            )
+
+            # it will print a connection object if everything is fine
+            cursor = db.cursor()
+            cursor.execute("SHOW TABLES")
+            for (table_name,) in cursor:
+                self.mySQLcombo.addItem(table_name)
+
+            showintableButton = QPushButton("view in Table", self.mySQLRecordDialog)
+            showintableButton.setMinimumWidth(300)
+            showintableButton.move(100, 100)
+            showintableButton.setStyleSheet("background-color :#FCF6F5FF")
+            showintableButton.clicked.connect(self.showSQLinTable)
+
+            self.emailIDtextBox = QLineEdit(self.mySQLRecordDialog)
+            self.emailIDtextBox.setMinimumWidth(300)
+            self.emailIDtextBox.setToolTip("enter your email ID here")
+            self.emailIDtextBox.move(100, 150)
+            self.emailIDtextBox.setStyleSheet("background-color :#FCF6F5FF")
+
+            sendEmailButton = QPushButton("send me an email", self.mySQLRecordDialog)
+            sendEmailButton.setMinimumWidth(300)
+            sendEmailButton.move(100, 200)
+            sendEmailButton.setStyleSheet("background-color :#FCF6F5FF")
+            sendEmailButton.clicked.connect(self.sendMySQLEmail)
+
+            self.mySQLRecordDialog.exec_()
+        except Exception as e:
+            print(e)
+
+    def sendMySQLEmail(self):
+        try:
+            if not os.path.isfile("classes/" + self.comboBox.currentText() + "/attendence recods/" + self.mySQLcombo.currentText() + '.xlsx'):
+                db = connector.connect(
+                    host="localhost",
+                    user="root",
+                    passwd="dbms",
+                    database=self.comboBox.currentText()
+                )
+                cur = db.cursor()
+                cur.execute("SELECT Roll_no, name, attendance_status, Time_Recorded  FROM " + self.mySQLcombo.currentText())
+                result_set = cur.fetchall()
+                workbook = xlsxwriter.Workbook(
+                    "classes/" + self.comboBox.currentText() + "/attendence recods/" + self.mySQLcombo.currentText() + '.xlsx')
+
+                # By default worksheet names in the spreadsheet will be
+                # Sheet1, Sheet2 etc., but we can also specify a name.
+                worksheet = workbook.add_worksheet("My sheet")
+
+                # Some data we want to write to the worksheet.
+
+                # Start from the first cell. Rows and
+                # columns are zero indexed.
+                worksheet.write(0, 0, "Roll No")
+                worksheet.write(0, 1, "Names")
+                worksheet.write(0, 2, "Attendance Status")
+                worksheet.write(0, 3, "Time Recorded")
+                row = 1
+                col = 0
+
+                # Iterate over the data and write it out row by row.
+                i = 0
+                for row in result_set:
+                    worksheet.write(i + 1, 0, i + 1)
+                    worksheet.write(i + 1, 1, row[1])
+                    worksheet.write(i + 1, 2, row[2])
+                    worksheet.write(i + 1, 3, row[3])
+                    i = i + 1
+
+                workbook.close()
+
+            if len(self.emailIDtextBox.text()) > 0:
+
+                mail_content = '''Hello,
+                            this is the attendance you requested in excel format this is
+                            an automated message from facial-recognition-attendance-system
+                            app 
+                            '''
+                # Setup the MIME
+                msg = MIMEMultipart()
+                msg['From'] = "facialrecognitionsytem@gmail.com"
+                msg['To'] = self.emailIDtextBox.text()
+                msg['Date'] = formatdate(localtime=True)
+                msg['Subject'] = "requested attendance"
+                msg.attach(MIMEText(mail_content))
+
+                part = MIMEBase('application', "octet-stream")
+                part.set_payload(
+                    open("classes/" + self.comboBox.currentText() + "/attendence recods/" + self.mySQLcombo.currentText() + ".xlsx",
+                         "rb").read())
+                encoders.encode_base64(part)
+                part.add_header('Content-Disposition', 'attachment; filename=" ' + self.mySQLcombo.currentText() + ".xlsx")
+                msg.attach(part)
+
+                smtp = smtplib.SMTP('smtp.gmail.com', 587)
+                smtp.starttls()
+                smtp.login("facialrecognitionsytem@gmail.com", "Parag@1999")
+                smtp.sendmail("facialrecognitionsytem@gmail.com", self.emailIDtextBox.text(), msg.as_string())
+                print("email sent to " + self.emailIDtextBox.text())
+                self.eventlogsbox.setText("sql record saved as " + self.mySQLcombo.currentText() + ".xlsx" + "and sent to" +
+                                          self.emailIDtextBox.text())
+                smtp.quit()
+
+            else:
+                self.eventlogsbox.setText("enter email ID first")
+
+
+
+
+
+
+
+        except Exception as e:
+            print(e)
+
+    def showSQLinTable(self):
+        self.mySQLRecordDialog.close()
+        try:
+            db = connector.connect(
+                host="localhost",
+                user="root",
+                passwd="dbms",
+                database=self.comboBox.currentText()
+            )
+            cur = db.cursor()
+            cur.execute("SELECT Roll_no, name, attendance_status, Time_Recorded  FROM " + self.mySQLcombo.currentText())
+            result_set = cur.fetchall()
+            i = 0
+            for row in result_set:
+                self.tableWidget.setItem(i, 0, QTableWidgetItem(str(i + 1)))
+                self.tableWidget.setItem(i, 1, QTableWidgetItem(row[1]))
+                self.tableWidget.setItem(i, 2, QTableWidgetItem(row[2]))
+                self.tableWidget.setItem(i, 3, QTableWidgetItem(row[3]))
+                i += 1
+
+
+
+
+
+
+        except Exception as e:
+            print(e)
 
     def sendexcelEmail(self):
         try:
-            sender_address = 'facialrecognitionsytem@gmail.com'
-            sender_pass = 'Parag@1999'
-            receiver_address = self.emailIDtextBox.text();
             mail_content = '''Hello,
             this is the attendance you requested in excel format this is
             an automated message from facial-recognition-attendance-system
@@ -620,7 +785,9 @@ class Window(QDialog):
             msg.attach(MIMEText(mail_content))
 
             part = MIMEBase('application', "octet-stream")
-            part.set_payload(open("classes/" + self.comboBox.currentText() + "/attendence recods/" + self.excelcombo.currentText(), "rb").read())
+            part.set_payload(
+                open("classes/" + self.comboBox.currentText() + "/attendence recods/" + self.excelcombo.currentText(),
+                     "rb").read())
             encoders.encode_base64(part)
             part.add_header('Content-Disposition', 'attachment; filename=" ' + self.excelcombo.currentText())
             msg.attach(part)
@@ -634,6 +801,7 @@ class Window(QDialog):
 
         except Exception as e:
             print(e)
+
     def displayImage(self, img, window=1):
         qformat = QImage.Format_Indexed8
 
