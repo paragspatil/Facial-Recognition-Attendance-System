@@ -26,7 +26,7 @@ from ui_main_window import *
 from tensorflow.keras.preprocessing.image import img_to_array
 from tensorflow.keras.models import load_model
 import numpy as np
-
+import pymysql
 import imutils
 import pickle
 
@@ -36,6 +36,13 @@ import cv2
 class Window(QDialog):
     def __init__(self):
         super().__init__()
+        file = open("logindetail.txt", "r+")
+        lines = file.readlines()
+        print("hereon")
+        self.username = lines[0]
+        self.password = lines[1]
+        self.username = self.username[0:len(self.username) - 1]
+        file.close()
 
         self.listofstudentRollnos = []
         self.modelPath = os.path.sep.join(["my-liveness-detection", "face_detector",
@@ -135,17 +142,8 @@ class Window(QDialog):
 
         # Column count
         self.tableWidget.setColumnCount(4)
-        """
-        self.tableWidget.setItem(0, 0, QTableWidgetItem("Name"))
-        self.tableWidget.setItem(0, 1, QTableWidgetItem("City"))
-        self.tableWidget.setItem(1, 0, QTableWidgetItem("Aloysius"))
-        self.tableWidget.setItem(1, 1, QTableWidgetItem("Indore"))
-        self.tableWidget.setItem(2, 0, QTableWidgetItem("Alan"))
-        self.tableWidget.setItem(2, 1, QTableWidgetItem("Bhopal"))
-        self.tableWidget.setItem(3, 0, QTableWidgetItem("Arnavi"))
-        self.tableWidget.setItem(3, 1, QTableWidgetItem("Mandsaur"))
-        """
-        self.tableWidget.setHorizontalHeaderLabels(["Roll No", "Name", "Attendece Status", "Time Recorded"])
+
+        self.tableWidget.setHorizontalHeaderLabels(["Roll No", "Name", "Attendance Status", "Time Recorded"])
 
         # Table will fit the screen horizontally
         self.tableWidget.horizontalHeader().setStretchLastSection(True)
@@ -287,7 +285,7 @@ class Window(QDialog):
                         if label == "fake":
                             self.eventlogsbox.setText("don't cheat attendance; serious action will be taken")
                             fakeCount += 1
-                            if fakeCount > 6:
+                            if fakeCount > 9:
                                 frequency = 2500  # Set Frequency To 2500 Hertz
                                 duration = 2000  # Set Duration To 1000 ms == 1 second
                                 winsound.Beep(frequency, duration)
@@ -362,8 +360,8 @@ class Window(QDialog):
             try:
                 db = connector.connect(
                     host="localhost",
-                    user="root",
-                    passwd="dbms",
+                    user=self.username,
+                    passwd=self.password,
                     database=self.comboBox.currentText()
                 )
 
@@ -500,8 +498,8 @@ class Window(QDialog):
             try:
                 db = connector.connect(
                     host="localhost",
-                    user="root",
-                    passwd="dbms"
+                    user=self.username,
+                    passwd=self.password
                 )
 
                 # it will print a connection object if everything is fine
@@ -623,8 +621,8 @@ class Window(QDialog):
 
             db = connector.connect(
                 host="localhost",
-                user="root",
-                passwd="dbms",
+                user=self.username,
+                passwd=self.password,
                 database=self.comboBox.currentText()
             )
 
@@ -658,15 +656,17 @@ class Window(QDialog):
 
     def sendMySQLEmail(self):
         try:
-            if not os.path.isfile("classes/" + self.comboBox.currentText() + "/attendence recods/" + self.mySQLcombo.currentText() + '.xlsx'):
+            if not os.path.isfile(
+                    "classes/" + self.comboBox.currentText() + "/attendence recods/" + self.mySQLcombo.currentText() + '.xlsx'):
                 db = connector.connect(
                     host="localhost",
-                    user="root",
-                    passwd="dbms",
+                    user=self.username,
+                    passwd=self.password,
                     database=self.comboBox.currentText()
                 )
                 cur = db.cursor()
-                cur.execute("SELECT Roll_no, name, attendance_status, Time_Recorded  FROM " + self.mySQLcombo.currentText())
+                cur.execute(
+                    "SELECT Roll_no, name, attendance_status, Time_Recorded  FROM " + self.mySQLcombo.currentText())
                 result_set = cur.fetchall()
                 workbook = xlsxwriter.Workbook(
                     "classes/" + self.comboBox.currentText() + "/attendence recods/" + self.mySQLcombo.currentText() + '.xlsx')
@@ -714,10 +714,12 @@ class Window(QDialog):
 
                 part = MIMEBase('application', "octet-stream")
                 part.set_payload(
-                    open("classes/" + self.comboBox.currentText() + "/attendence recods/" + self.mySQLcombo.currentText() + ".xlsx",
-                         "rb").read())
+                    open(
+                        "classes/" + self.comboBox.currentText() + "/attendence recods/" + self.mySQLcombo.currentText() + ".xlsx",
+                        "rb").read())
                 encoders.encode_base64(part)
-                part.add_header('Content-Disposition', 'attachment; filename=" ' + self.mySQLcombo.currentText() + ".xlsx")
+                part.add_header('Content-Disposition',
+                                'attachment; filename=" ' + self.mySQLcombo.currentText() + ".xlsx")
                 msg.attach(part)
 
                 smtp = smtplib.SMTP('smtp.gmail.com', 587)
@@ -725,8 +727,9 @@ class Window(QDialog):
                 smtp.login("facialrecognitionsytem@gmail.com", "Parag@1999")
                 smtp.sendmail("facialrecognitionsytem@gmail.com", self.emailIDtextBox.text(), msg.as_string())
                 print("email sent to " + self.emailIDtextBox.text())
-                self.eventlogsbox.setText("sql record saved as " + self.mySQLcombo.currentText() + ".xlsx" + "and sent to" +
-                                          self.emailIDtextBox.text())
+                self.eventlogsbox.setText(
+                    "sql record saved as " + self.mySQLcombo.currentText() + ".xlsx" + "and sent to" +
+                    self.emailIDtextBox.text())
                 smtp.quit()
 
             else:
@@ -746,8 +749,8 @@ class Window(QDialog):
         try:
             db = connector.connect(
                 host="localhost",
-                user="root",
-                passwd="dbms",
+                user=self.username,
+                passwd=self.password,
                 database=self.comboBox.currentText()
             )
             cur = db.cursor()
@@ -817,6 +820,242 @@ class Window(QDialog):
         self.cameraoutput.setPixmap(QPixmap.fromImage(img))
         self.cameraoutput.setAlignment(QtCore.Qt.AlignCenter | QtCore.Qt.AlignVCenter)
 
+
+class loginWindow(QDialog):
+    def __init__(self):
+        super().__init__()
+        self.left = 500
+        self.top = 500
+        self.width = 500
+        self.height = 500
+        self.initWindow()
+
+    def initWindow(self):
+        self.setWindowTitle("login")
+        self.setGeometry(self.left, self.top, self.width, self.height)
+        self.initUI()
+        self.show()
+
+    def initUI(self):
+        self.usernamebox = QLineEdit(self)
+        self.usernamebox.setMaximumHeight(40)
+        self.usernamebox.setText("Welcome, enter your username here")
+        self.usernamebox.setMinimumWidth(300)
+        self.usernamebox.move(100, 50)
+        self.usernamebox.setStyleSheet("background-color :#FCF6F5FF")
+
+        self.passwordbox = QLineEdit(self)
+        self.passwordbox.setMaximumHeight(40)
+        self.passwordbox.setText("enter your password here")
+        self.passwordbox.setMinimumWidth(300)
+        self.passwordbox.move(100, 100)
+        self.passwordbox.setStyleSheet("background-color :#FCF6F5FF")
+
+        loginbutton = QPushButton("Login", self)
+        loginbutton.setMaximumHeight(40)
+        loginbutton.setMinimumWidth(100)
+        loginbutton.move(200, 150)
+        loginbutton.setStyleSheet("background-color :#FCF6F5FF")
+        loginbutton.clicked.connect(self.loginfunc)
+
+        accountlable = QLabel(self)
+        accountlable.setText("Don't have a account?, register below")
+        accountlable.setMinimumWidth(300)
+        accountlable.setMaximumHeight(40)
+        accountlable.move(100, 200)
+
+        createAccountButton = QPushButton("create new account", self)
+        createAccountButton.setMaximumHeight(40)
+        createAccountButton.setMinimumWidth(200)
+        createAccountButton.move(150, 250)
+        createAccountButton.setStyleSheet("background-color :#FCF6F5FF")
+        createAccountButton.clicked.connect(self.createnewaccout)
+
+        self.debugLable = QLabel(self)
+        self.debugLable.setMinimumHeight(200)
+        self.debugLable.setMinimumWidth(400)
+        self.debugLable.move(50, 300)
+
+    def loginfunc(self):
+        try:
+            username = self.usernamebox.text()
+            password = self.passwordbox.text()
+            db = connector.connect(
+                host="localhost",
+                user=username,
+                passwd=password,
+
+            )
+            file = open("logindetail.txt", "r+")
+            file.writelines([username + "\n", password])
+            file.close()
+            self.hide()
+            self.window = Window()
+            self.window.show()
+        except Exception as e:
+            print(e)
+            self.debugLable.setText("something is wrong try again with correct username and password or"
+
+                                    " create a new account")
+
+    def createnewaccout(self):
+        self.isadminloggedin = False
+        self.createaccdialog = QDialog()
+        self.createaccdialog.setGeometry(500, 500, 500, 500)
+
+        self.adminusernamebox = QLineEdit(self.createaccdialog)
+        self.adminusernamebox.setMaximumHeight(40)
+        self.adminusernamebox.setText("Welcome, enter admins username here")
+        self.adminusernamebox.setMinimumWidth(300)
+        self.adminusernamebox.move(100, 50)
+        self.adminusernamebox.setStyleSheet("background-color :#FCF6F5FF")
+
+        self.adminpasswordbox = QLineEdit(self.createaccdialog)
+        self.adminpasswordbox.setMaximumHeight(40)
+        self.adminpasswordbox.setText("enter admins password here")
+        self.adminpasswordbox.setMinimumWidth(300)
+        self.adminpasswordbox.move(100, 100)
+        self.adminpasswordbox.setStyleSheet("background-color :#FCF6F5FF")
+
+        loginbutton = QPushButton("Login", self.createaccdialog)
+        loginbutton.setMaximumHeight(40)
+        loginbutton.setMinimumWidth(100)
+        loginbutton.move(200, 150)
+        loginbutton.setStyleSheet("background-color :#FCF6F5FF")
+        loginbutton.clicked.connect(self.adminlogin)
+
+        self.accountlable = QLabel(self.createaccdialog)
+        self.accountlable.setText("first log in to admins account to create a new one")
+        self.accountlable.setMinimumWidth(300)
+        self.accountlable.setMaximumHeight(40)
+        self.accountlable.move(100, 200)
+
+        self.usernamebox = QLineEdit(self.createaccdialog)
+        self.usernamebox.setMaximumHeight(40)
+        self.usernamebox.setText("Welcome, enter your username here")
+        self.usernamebox.setMinimumWidth(300)
+        self.usernamebox.move(100, 300)
+        self.usernamebox.setStyleSheet("background-color :#FCF6F5FF")
+
+        self.passwordbox = QLineEdit(self.createaccdialog)
+        self.passwordbox.setMaximumHeight(40)
+        self.passwordbox.setText("enter your password here")
+        self.passwordbox.setMinimumWidth(300)
+        self.passwordbox.move(100, 350)
+        self.passwordbox.setStyleSheet("background-color :#FCF6F5FF")
+
+        createAccountButton = QPushButton("create new account", self.createaccdialog)
+        createAccountButton.setMaximumHeight(40)
+        createAccountButton.setMinimumWidth(200)
+        createAccountButton.move(150, 400)
+        createAccountButton.setStyleSheet("background-color :#FCF6F5FF")
+        createAccountButton.clicked.connect(self.createacc)
+
+        self.debugLable = QLabel(self.createaccdialog)
+        self.debugLable.setMinimumHeight(50)
+        self.debugLable.setMinimumWidth(400)
+        self.debugLable.move(50, 450)
+
+        self.createaccdialog.exec_()
+        self.hide()
+
+    def adminlogin(self):
+        try:
+            username = self.adminusernamebox.text()
+            password = self.adminpasswordbox.text()
+            db = connector.connect(
+                host="localhost",
+                user=username,
+                passwd=password,
+
+            )
+            self.accountlable.setText("success! create a new acoount below")
+            self.isadminloggedin = True
+
+
+
+
+
+        except Exception as e:
+            self.accountlable.setText("use correct details and try again")
+            print(e)
+
+    def createacc(self):
+        if self.isadminloggedin:
+            try:
+                if self.usernamebox.text() != "Welcome, enter your username here" and self.passwordbox.text() != "enter your password here":
+                    db = pymysql.connect(
+                        host="127.0.0.1",
+                        user="root",
+                        password="dbms",
+                        charset="utf8mb4",
+                        cursorclass=pymysql.cursors.DictCursor
+                    )
+                    cursor = db.cursor()
+                    username = self.usernamebox.text()
+                    password = self.passwordbox.text()
+
+                    sqlCreateUser = "CREATE USER '%s'@'localhost' IDENTIFIED BY '%s';" % (username, password)
+                    cursor.execute(sqlCreateUser)
+                    cursor.execute("GRANT ALL PRIVILEGES ON * . * TO '" +username+ "'@'localhost'")
+                    print("yeaah user created")
+
+                    db.close()
+                    """
+                    db2 = connector.connect(
+                        host="localhost",
+                        user="root",
+                        passwd="dbms",
+                        database="te division a"
+                       )
+                    cursor2 = db2.cursor()
+                    print("here1")
+                    cursor2.execute(
+                        "GRANT INSERT, SELECT, DELETE, TO pumba@localhost")
+                    print("here2")
+    
+                    #databases = cursor2.fetchall()  ## it returns a list of all databases present
+    
+                    ## printing the list of databases
+                    #print(databases)
+                    """
+
+
+            except Exception as e:
+                print(e)
+                self.debugLable.setText("something is wrong try again with different details")
+            try:
+                username = self.usernamebox.text()
+                password = self.passwordbox.text()
+                db = connector.connect(
+                    host="localhost",
+                    user=username,
+                    passwd=password,
+
+                )
+                file = open("logindetail.txt", "r+")
+                file.writelines([username + "\n", password])
+                file.close()
+                self.createaccdialog.close()
+                self.window = Window()
+                self.window.show()
+            except Exception as e:
+                print(e)
+                self.debugLable.setText("something is wrong try again with correct username and password or"
+    
+                                        " create a new account")
+
+
+
+        else:
+            self.debugLable.setText("log in to admins account first")
+
+
+if True:
+    print("hii")
+    App1 = QApplication(sys.argv)
+    window1 = loginWindow()
+    sys.exit(App1.exec_())
 
 if __name__ == "__main__":
     App = QApplication(sys.argv)

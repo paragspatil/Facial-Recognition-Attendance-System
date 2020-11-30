@@ -1,11 +1,17 @@
 import os
 import sys
 from datetime import datetime
+from email.utils import formatdate
+from os.path import isfile, join
 from shutil import copyfile
-
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from email.mime.base import MIMEBase
+from email import encoders
 import face_recognition
 from threading import *
-
+import winsound
 from mysql import connector
 import xlsxwriter
 from PyQt5.QtCore import QSize
@@ -26,54 +32,18 @@ import pickle
 
 import cv2
 
-try:
-    db = connector.connect(
-        host="localhost",
-        user="root",
-        passwd="dbms",
-        database= "te division a"
-    )
 
-    # it will print a connection object if everything is fine
-    cursor = db.cursor()
+# for git push
 
-    """
-    print('Connected to MySQL database')
-    cursor.execute("SELECT * FROM " + "23_11_202014_09_25")
-    # fetch all of the rows from the query
-    data = cursor.fetchall()
-    print("here")
-    # print the rows
-    for row in data:
-        print("Id = ", row[0], )
-        print("Name = ", row[1], "\n")
-        print("attendance status = ", row[2], )
-        print("time recorded ", row[3], "\n")
+db2 = connector.connect(
+                    host="localhost",
+                    user="ashwini",
+                    passwd="dbms",
 
-"""
+                )
+cursor2 = db2.cursor()
 
-    db = connector.connect(
-        host="localhost",
-        user="root",
-        passwd="dbms"
-    )
+databases = cursor2.fetchall()  ## it returns a list of all databases present
 
-    # it will print a connection object if everything is fine
-    print(db)
-    cursor = db.cursor()
-    c1 = "TE Division A"
-    c2 = "TE Division B"
-    cursor.execute("CREATE DATABASE `TE Division A`")
-    cursor.execute("CREATE DATABASE `TE Division B`")
-
-    ## creating a databse called 'datacamp'
-    ## 'execute()' method is used to compile a 'SQL' statement
-    ## below statement is used to create tha 'datacamp' database
-
-    databases = cursor.fetchall()  ## it returns a list of all databases present
-
-    ## printing the list of databases
-    print(databases)
-
-except Exception as e:
-    print(e)
+                ## printing the list of databases
+print(databases)
