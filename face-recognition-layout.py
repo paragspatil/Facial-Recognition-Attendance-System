@@ -10,7 +10,6 @@ from email.mime.text import MIMEText
 from email.mime.base import MIMEBase
 from email import encoders
 import face_recognition
-from threading import *
 import winsound
 from mysql import connector
 import xlsxwriter
@@ -20,16 +19,13 @@ from PyQt5.QtGui import QPixmap
 from PyQt5.QtWidgets import QApplication, QPushButton, QDialog, QGroupBox, QHBoxLayout, \
     QVBoxLayout, \
     QLabel, QTableWidgetItem, QTableWidget, QHeaderView, QComboBox, QLineEdit, QFileDialog, QMenuBar
-
 from ui_main_window import *
-
 from tensorflow.keras.preprocessing.image import img_to_array
 from tensorflow.keras.models import load_model
 import numpy as np
 import pymysql
 import imutils
 import pickle
-
 import cv2
 
 
@@ -38,7 +34,6 @@ class Window(QDialog):
         super().__init__()
         file = open("logindetail.txt", "r+")
         lines = file.readlines()
-        print("hereon")
         self.username = lines[0]
         self.password = lines[1]
         self.username = self.username[0:len(self.username) - 1]
@@ -191,7 +186,6 @@ class Window(QDialog):
             fakeCount = 0
             self.startattendenceButton.setStyleSheet("background-color : red")
             self.startattendenceButton.setText("stop Attendance session")
-            print("clicked")
             studentImages = []
             studentImagesEncodings = []
             self.attendanceStatus = []
@@ -200,7 +194,6 @@ class Window(QDialog):
             self.listOfstudents = os.listdir(path)
             i = 0
             for student in self.listOfstudents:
-                print(path + student + "/" + student + ".jpg")
                 currentImage = cv2.imread(path + student + "/" + student + ".jpg")
                 studentImages.append(currentImage)
                 currentImage = cv2.cvtColor(currentImage, cv2.COLOR_BGR2RGB)
@@ -220,7 +213,7 @@ class Window(QDialog):
 
             # load the liveness detector model and label encoder from disk
             try:
-                print("[INFO] loading liveness detector...")
+                self.eventlogsbox.setText("[INFO] loading liveness detector...")
                 model = load_model("my-liveness-detection/liveness.model")
                 le = pickle.loads(open("my-liveness-detection/le.pickle", "rb").read())
 
@@ -320,7 +313,7 @@ class Window(QDialog):
         if len(self.listofstudentRollnos) > 0:
             now = datetime.now()
             dt_string = now.strftime("%d-%m-%Y %H-%M-%S")
-            print(dt_string)
+            # print(dt_string)
             print(os.path.isdir("classes/" + self.comboBox.currentText() + "/attendence recods"))
             # writing to excel
             workbook = xlsxwriter.Workbook(
@@ -371,16 +364,15 @@ class Window(QDialog):
                 dt_string = now.strftime("%d_%m_%Y%H_%M_%S")
 
                 cursor.execute(
-                    "CREATE TABLE " + dt_string + " (Roll_no INT(11) PRIMARY KEY,name VARCHAR(255), attendance_status VARCHAR(255),Time_Recorded VARCHAR(255))")
+                    "CREATE TABLE " + dt_string + "(Roll_no INT(11) PRIMARY KEY,name VARCHAR(255), attendance_status "
+                                                  "VARCHAR(255),Time_Recorded VARCHAR(255))")
                 cursor.execute("SHOW TABLES")
 
                 tables = cursor.fetchall()  ## it returns list of tables present in the database
 
-                ## showing all the tables one by one
-                for table in tables:
-                    print(table)
                 for i in range(0, len(self.listofstudentRollnos)):
-                    query = "INSERT INTO " + dt_string + " (Roll_no, name,attendance_status,Time_Recorded) VALUES (%s, %s, %s, %s)"
+                    query = "INSERT INTO " + dt_string + "(Roll_no, name,attendance_status,Time_Recorded) VALUES (%s, " \
+                                                         "%s, %s, %s) "
                     ## storing values in a variable
                     values = (self.listofstudentRollnos[i], self.listOfstudents[i], self.attendanceStatus[i],
                               self.timeRecorded[i])
@@ -391,7 +383,7 @@ class Window(QDialog):
                     ## to make final output we have to run the 'commit()' method of the database object
                     db.commit()
 
-                    print(cursor.rowcount, "record inserted")
+                self.eventlogsbox.setText("attendance session saved successfully in SQL")
 
 
 
@@ -726,7 +718,6 @@ class Window(QDialog):
                 smtp.starttls()
                 smtp.login("facialrecognitionsytem@gmail.com", "Parag@1999")
                 smtp.sendmail("facialrecognitionsytem@gmail.com", self.emailIDtextBox.text(), msg.as_string())
-                print("email sent to " + self.emailIDtextBox.text())
                 self.eventlogsbox.setText(
                     "sql record saved as " + self.mySQLcombo.currentText() + ".xlsx" + "and sent to" +
                     self.emailIDtextBox.text())
@@ -799,7 +790,7 @@ class Window(QDialog):
             smtp.starttls()
             smtp.login("facialrecognitionsytem@gmail.com", "Parag@1999")
             smtp.sendmail("facialrecognitionsytem@gmail.com", self.emailIDtextBox.text(), msg.as_string())
-            print("email sent to " + self.emailIDtextBox.text())
+            self.eventlogsbox.setText("email sent to " + self.emailIDtextBox.text())
             smtp.quit()
 
         except Exception as e:
@@ -893,7 +884,6 @@ class loginWindow(QDialog):
             self.window = Window()
             self.window.show()
         except Exception as e:
-            print(e)
             self.debugLable.setText("something is wrong try again with correct username and password or"
 
                                     " create a new account")
@@ -978,7 +968,6 @@ class loginWindow(QDialog):
 
         except Exception as e:
             self.accountlable.setText("use correct details and try again")
-            print(e)
 
     def createacc(self):
         if self.isadminloggedin:
@@ -997,29 +986,10 @@ class loginWindow(QDialog):
 
                     sqlCreateUser = "CREATE USER '%s'@'localhost' IDENTIFIED BY '%s';" % (username, password)
                     cursor.execute(sqlCreateUser)
-                    cursor.execute("GRANT ALL PRIVILEGES ON * . * TO '" +username+ "'@'localhost'")
+                    cursor.execute("GRANT ALL PRIVILEGES ON * . * TO '" + username + "'@'localhost'")
                     print("yeaah user created")
 
                     db.close()
-                    """
-                    db2 = connector.connect(
-                        host="localhost",
-                        user="root",
-                        passwd="dbms",
-                        database="te division a"
-                       )
-                    cursor2 = db2.cursor()
-                    print("here1")
-                    cursor2.execute(
-                        "GRANT INSERT, SELECT, DELETE, TO pumba@localhost")
-                    print("here2")
-    
-                    #databases = cursor2.fetchall()  ## it returns a list of all databases present
-    
-                    ## printing the list of databases
-                    #print(databases)
-                    """
-
 
             except Exception as e:
                 print(e)
@@ -1040,25 +1010,18 @@ class loginWindow(QDialog):
                 self.window = Window()
                 self.window.show()
             except Exception as e:
-                print(e)
                 self.debugLable.setText("something is wrong try again with correct username and password or"
-    
+
                                         " create a new account")
-
-
 
         else:
             self.debugLable.setText("log in to admins account first")
 
 
 if True:
-    print("hii")
     App1 = QApplication(sys.argv)
     window1 = loginWindow()
     sys.exit(App1.exec_())
 
-if __name__ == "__main__":
-    App = QApplication(sys.argv)
-    window = Window()
-    sys.exit(App.exec_())
+
 # for git push
