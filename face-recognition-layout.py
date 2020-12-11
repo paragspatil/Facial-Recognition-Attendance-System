@@ -228,12 +228,13 @@ class Window(QDialog):
 
                 facecurrentframe = face_recognition.face_locations(imgs)
                 encodecurrentframe = face_recognition.face_encodings(imgs, facecurrentframe)
+                try:
 
-                cv2.rectangle(img, (facecurrentframe[0][3] * 4, facecurrentframe[0][0] * 4),
+                    cv2.rectangle(img, (facecurrentframe[0][3] * 4, facecurrentframe[0][0] * 4),
                                   (facecurrentframe[0][1] * 4, facecurrentframe[0][2] * 4), (255, 0, 255),
                                   2)
-
-
+                except Exception as e:
+                    print(e)
                 # processing frame for liveness detection
 
                 self.displayImage(img, 1)
