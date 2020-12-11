@@ -229,6 +229,11 @@ class Window(QDialog):
                 facecurrentframe = face_recognition.face_locations(imgs)
                 encodecurrentframe = face_recognition.face_encodings(imgs, facecurrentframe)
 
+                cv2.rectangle(img, (facecurrentframe[0][3] * 4, facecurrentframe[0][0] * 4),
+                                  (facecurrentframe[0][1] * 4, facecurrentframe[0][2] * 4), (255, 0, 255),
+                                  2)
+
+
                 # processing frame for liveness detection
 
                 self.displayImage(img, 1)
@@ -292,6 +297,7 @@ class Window(QDialog):
 
                                 if matches[matchIndex]:
                                     # print(self.listOfstudents[matchIndex])
+
                                     self.tableWidget.setItem(matchIndex, 2, QTableWidgetItem("Present"))
                                     now = datetime.now()
                                     dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
@@ -987,7 +993,6 @@ class loginWindow(QDialog):
                     sqlCreateUser = "CREATE USER '%s'@'localhost' IDENTIFIED BY '%s';" % (username, password)
                     cursor.execute(sqlCreateUser)
                     cursor.execute("GRANT ALL PRIVILEGES ON * . * TO '" + username + "'@'localhost'")
-
 
                     db.close()
 
