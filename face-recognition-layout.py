@@ -987,12 +987,12 @@ class loginWindow(QDialog):
                     sqlCreateUser = "CREATE USER '%s'@'localhost' IDENTIFIED BY '%s';" % (username, password)
                     cursor.execute(sqlCreateUser)
                     cursor.execute("GRANT ALL PRIVILEGES ON * . * TO '" + username + "'@'localhost'")
-                    print("yeaah user created")
+
 
                     db.close()
 
             except Exception as e:
-                print(e)
+
                 self.debugLable.setText("something is wrong try again with different details")
             try:
                 username = self.usernamebox.text()
