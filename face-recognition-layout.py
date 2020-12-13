@@ -37,7 +37,10 @@ class Window(QDialog):
         self.username = lines[0]
         self.password = lines[1]
         self.username = self.username[0:len(self.username) - 1]
+        self.password = self.password[0:len(self.password)]
         file.close()
+        print(self.username)
+        print(self.password)
 
         self.listofstudentRollnos = []
         self.modelPath = os.path.sep.join(["my-liveness-detection", "face_detector",
@@ -884,6 +887,7 @@ class loginWindow(QDialog):
                 passwd=password,
 
             )
+            open('logindetail.txt', 'w').close()
             file = open("logindetail.txt", "r+")
             file.writelines([username + "\n", password])
             file.close()

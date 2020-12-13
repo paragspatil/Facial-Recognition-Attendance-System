@@ -63,17 +63,23 @@ try:
     cursor = db.cursor()
     c1 = "TE Division A"
     c2 = "TE Division B"
-    cursor.execute("CREATE DATABASE `TE Division A`")
-    cursor.execute("CREATE DATABASE `TE Division B`")
+    #cursor.execute("CREATE DATABASE `TE Division A`")
+    #cursor.execute("CREATE DATABASE `TE Division B`")
+    username="root"
+    #password="dbms"
+
+    #cursor.execute("GRANT ALL PRIVILEGES ON * . * TO '" + username + "'@'localhost'")
 
     ## creating a databse called 'datacamp'
     ## 'execute()' method is used to compile a 'SQL' statement
     ## below statement is used to create tha 'datacamp' database
 
-    databases = cursor.fetchall()  ## it returns a list of all databases present
+    "GRANT ALL PRIVILEGES ON *.*TO 'root' @ '%' IDENTIFIED BY 'dbms';"
+    cursor.execute("GRANT ALL PRIVILEGES ON * . * TO '" + username + "'@'localhost'")
+    #databases= cursor.execute("show databases")
 
     ## printing the list of databases
-    print(databases)
+    #print(databases)
 
 except Exception as e:
     print(e)
