@@ -1,5 +1,6 @@
 import os
 import sys
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 from datetime import datetime
 from email.utils import formatdate
 from os.path import isfile, join
@@ -39,10 +40,9 @@ class Window(QDialog):
         self.username = self.username[0:len(self.username) - 1]
         self.password = self.password[0:len(self.password)]
         file.close()
-        print(self.username)
-        print(self.password)
+        # print(self.username)
+        # print(self.password)
 
-        self.listofstudentRollnos = []
         self.modelPath = os.path.sep.join(["my-liveness-detection", "face_detector",
                                            "res10_300x300_ssd_iter_140000.caffemodel"])
         self.protoPath = os.path.sep.join(["my-liveness-detection", "face_detector", "deploy.prototxt"])
@@ -184,139 +184,143 @@ class Window(QDialog):
         self.cameraGroupBox.setLayout(camerahboxlayout)
 
     def StartAttendenceSession(self):
-        if not self.isAttendance:
-            self.isAttendance = True
-            fakeCount = 0
-            self.startattendenceButton.setStyleSheet("background-color : red")
-            self.startattendenceButton.setText("stop Attendance session")
-            studentImages = []
-            studentImagesEncodings = []
-            self.attendanceStatus = []
-            self.timeRecorded = []
-            path = "classes/" + self.comboBox.currentText() + "/Students Data/"
-            self.listOfstudents = os.listdir(path)
-            i = 0
-            for student in self.listOfstudents:
-                currentImage = cv2.imread(path + student + "/" + student + ".jpg")
-                studentImages.append(currentImage)
-                currentImage = cv2.cvtColor(currentImage, cv2.COLOR_BGR2RGB)
-                encode = face_recognition.face_encodings(currentImage)[0]
-                studentImagesEncodings.append(encode)
-
-                self.tableWidget.setItem(i, 1, QTableWidgetItem(student))
-                self.tableWidget.setItem(i, 0, QTableWidgetItem(str(i)))
-                self.tableWidget.setItem(i, 2, QTableWidgetItem("Absent"))
-                self.listofstudentRollnos.append(i + 1)
-                self.attendanceStatus.append("Absent")
-                self.timeRecorded.append("not recorded")
-                i = i + 1
-
-            # code for fake and real person detection
-            net = cv2.dnn.readNetFromCaffe(self.protoPath, self.modelPath)
-
-            # load the liveness detector model and label encoder from disk
-            try:
-                self.eventlogsbox.setText("[INFO] loading liveness detector...")
+         try:
+            if not self.isAttendance:
+                self.isAttendance = True
+                self.cap = cv2.VideoCapture(0)
                 model = load_model("my-liveness-detection/liveness.model")
-                le = pickle.loads(open("my-liveness-detection/le.pickle", "rb").read())
+                self.listofstudentRollnos = []
+                fakeCount = 0
+                self.startattendenceButton.setStyleSheet("background-color : red")
+                self.startattendenceButton.setText("stop Attendance session")
+                studentImages = []
+                studentImagesEncodings = []
+                self.attendanceStatus = []
+                self.timeRecorded = []
+                path = "classes/" + self.comboBox.currentText() + "/Students Data/"
+                self.listOfstudents = os.listdir(path)
+                i = 0
+                for student in self.listOfstudents:
+                    currentImage = cv2.imread(path + student + "/" + student + ".jpg")
+                    studentImages.append(currentImage)
+                    currentImage = cv2.cvtColor(currentImage, cv2.COLOR_BGR2RGB)
+                    encode = face_recognition.face_encodings(currentImage)[0]
+                    studentImagesEncodings.append(encode)
 
-            except Exception as e:
-                print(e.msg)
-            self.cap = cv2.VideoCapture(0)
-            while self.isAttendance:
-                success, img = self.cap.read()
-                frame = img
-                imgs = cv2.resize(img, (0, 0), None, 0.25, 0.25)
-                imgs = cv2.cvtColor(imgs, cv2.COLOR_BGR2RGB)
+                    self.tableWidget.setItem(i, 1, QTableWidgetItem(student))
+                    self.tableWidget.setItem(i, 0, QTableWidgetItem(str(i)))
+                    self.tableWidget.setItem(i, 2, QTableWidgetItem("Absent"))
+                    self.listofstudentRollnos.append(i + 1)
+                    self.attendanceStatus.append("Absent")
+                    self.timeRecorded.append("not recorded")
+                    i = i + 1
 
-                facecurrentframe = face_recognition.face_locations(imgs)
-                encodecurrentframe = face_recognition.face_encodings(imgs, facecurrentframe)
+                # code for fake and real person detection
+                net = cv2.dnn.readNetFromCaffe(self.protoPath, self.modelPath)
+
+                # load the liveness detector model and label encoder from disk
                 try:
+                    self.eventlogsbox.setText("[INFO] loading liveness detector...")
+                    le = pickle.loads(open("my-liveness-detection/le.pickle", "rb").read())
 
-                    cv2.rectangle(img, (facecurrentframe[0][3] * 4, facecurrentframe[0][0] * 4),
-                                  (facecurrentframe[0][1] * 4, facecurrentframe[0][2] * 4), (255, 0, 255),
-                                  2)
                 except Exception as e:
                     print(e)
-                # processing frame for liveness detection
+                while self.isAttendance:
+                    success, img = self.cap.read()
+                    frame = img
+                    imgs = cv2.resize(img, (0, 0), None, 0.25, 0.25)
+                    imgs = cv2.cvtColor(imgs, cv2.COLOR_BGR2RGB)
 
-                self.displayImage(img, 1)
-                cv2.waitKey()
-                frame = imutils.resize(frame, width=600)
+                    facecurrentframe = face_recognition.face_locations(imgs)
+                    encodecurrentframe = face_recognition.face_encodings(imgs, facecurrentframe)
+                    try:
 
-                # grab the frame dimensions and convert it to a blob
-                (h, w) = frame.shape[:2]
-                blob = cv2.dnn.blobFromImage(cv2.resize(frame, (300, 300)), 1.0,
-                                             (300, 300), (104.0, 177.0, 123.0))
-                # pass the blob through the network and obtain the detections and
-                # predictions
-                net.setInput(blob)
-                detections = net.forward()
+                        cv2.rectangle(img, (facecurrentframe[0][3] * 4, facecurrentframe[0][0] * 4),
+                                      (facecurrentframe[0][1] * 4, facecurrentframe[0][2] * 4), (255, 0, 255),
+                                      2)
+                    except Exception as e:
+                    # processing frame for liveness detection
+                        pass
 
-                # loop over the detections
-                for i in range(0, detections.shape[2]):
-                    # extract the confidence (i.e., probability) associated with the
-                    # prediction
-                    confidence = detections[0, 0, i, 2]
-                    # filter out weak detections
-                    if confidence > 0.5:
-                        # compute the (x, y)-coordinates of the bounding box for
-                        # the face and extract the face ROI
-                        box = detections[0, 0, i, 3:7] * np.array([w, h, w, h])
-                        (startX, startY, endX, endY) = box.astype("int")
-                        # ensure the detected bounding box does fall outside the
-                        # dimensions of the frame
-                        startX = max(0, startX)
-                        startY = max(0, startY)
-                        endX = min(w, endX)
-                        endY = min(h, endY)
-                        # extract the face ROI and then preproces it in the exact
-                        # same manner as our training data
-                        face = frame[startY:endY, startX:endX]
-                        face = cv2.resize(face, (32, 32))
-                        face = face.astype("float") / 255.0
-                        face = img_to_array(face)
-                        face = np.expand_dims(face, axis=0)
-                        # pass the face ROI through the trained liveness detector
-                        # model to determine if the face is "real" or "fake"
-                        preds = model.predict(face)[0]
-                        j = np.argmax(preds)
-                        label = le.classes_[j]
-                        # print(label)
+                    self.displayImage(img, 1)
+                    cv2.waitKey()
+                    frame = imutils.resize(frame, width=600)
 
-                        if label == "fake":
-                            self.eventlogsbox.setText("don't cheat attendance; serious action will be taken")
-                            fakeCount += 1
-                            if fakeCount > 9:
-                                frequency = 2500  # Set Frequency To 2500 Hertz
-                                duration = 2000  # Set Duration To 1000 ms == 1 second
-                                winsound.Beep(frequency, duration)
+                    # grab the frame dimensions and convert it to a blob
+                    (h, w) = frame.shape[:2]
+                    blob = cv2.dnn.blobFromImage(cv2.resize(frame, (300, 300)), 1.0,
+                                                 (300, 300), (104.0, 177.0, 123.0))
+                    # pass the blob through the network and obtain the detections and
+                    # predictions
+                    net.setInput(blob)
+                    detections = net.forward()
 
-                        elif label == "real":
-                            fakeCount = 0
-                            for encodeface, faceLoc in zip(encodecurrentframe, facecurrentframe):
-                                matches = face_recognition.compare_faces(studentImagesEncodings, encodeface)
-                                faceDis = face_recognition.face_distance(studentImagesEncodings, encodeface)
-                                matchIndex = np.argmin(faceDis)
+                    # loop over the detections
+                    for i in range(0, detections.shape[2]):
+                        # extract the confidence (i.e., probability) associated with the
+                        # prediction
+                        confidence = detections[0, 0, i, 2]
+                        # filter out weak detections
+                        if confidence > 0.5:
+                            # compute the (x, y)-coordinates of the bounding box for
+                            # the face and extract the face ROI
+                            box = detections[0, 0, i, 3:7] * np.array([w, h, w, h])
+                            (startX, startY, endX, endY) = box.astype("int")
+                            # ensure the detected bounding box does fall outside the
+                            # dimensions of the frame
+                            startX = max(0, startX)
+                            startY = max(0, startY)
+                            endX = min(w, endX)
+                            endY = min(h, endY)
+                            # extract the face ROI and then preproces it in the exact
+                            # same manner as our training data
+                            face = frame[startY:endY, startX:endX]
+                            face = cv2.resize(face, (32, 32))
+                            face = face.astype("float") / 255.0
+                            face = img_to_array(face)
+                            face = np.expand_dims(face, axis=0)
+                            # pass the face ROI through the trained liveness detector
+                            # model to determine if the face is "real" or "fake"
+                            preds = model.predict(face)[0]
+                            j = np.argmax(preds)
+                            label = le.classes_[j]
+                            # print(label)
 
-                                if matches[matchIndex]:
-                                    # print(self.listOfstudents[matchIndex])
+                            if label == "fake":
+                                self.eventlogsbox.setText("don't cheat attendance; serious action will be taken")
+                                fakeCount += 1
+                                if fakeCount > 9:
+                                    frequency = 2500  # Set Frequency To 2500 Hertz
+                                    duration = 2000  # Set Duration To 1000 ms == 1 second
+                                    winsound.Beep(frequency, duration)
 
-                                    self.tableWidget.setItem(matchIndex, 2, QTableWidgetItem("Present"))
-                                    now = datetime.now()
-                                    dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
-                                    self.tableWidget.setItem(matchIndex, 3, QTableWidgetItem(dt_string))
-                                    self.attendanceStatus[matchIndex] = "Present"
-                                    self.timeRecorded[matchIndex] = dt_string
-                                    self.eventlogsbox.setText(self.listOfstudents[matchIndex]
-                                                              + " your attendance has been recorded successfully")
+                            elif label == "real":
+                                fakeCount = 0
+                                for encodeface, faceLoc in zip(encodecurrentframe, facecurrentframe):
+                                    matches = face_recognition.compare_faces(studentImagesEncodings, encodeface)
+                                    faceDis = face_recognition.face_distance(studentImagesEncodings, encodeface)
+                                    matchIndex = np.argmin(faceDis)
 
-        else:
-            self.isAttendance = False
-            self.cap.release()
-            self.cameraoutput.clear()
-            self.startattendenceButton.setText("Start Attendance session")
-            self.startattendenceButton.setStyleSheet("background-color :#FCF6F5FF")
+                                    if matches[matchIndex]:
+                                        # print(self.listOfstudents[matchIndex])
+
+                                        self.tableWidget.setItem(matchIndex, 2, QTableWidgetItem("Present"))
+                                        now = datetime.now()
+                                        dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
+                                        self.tableWidget.setItem(matchIndex, 3, QTableWidgetItem(dt_string))
+                                        self.attendanceStatus[matchIndex] = "Present"
+                                        self.timeRecorded[matchIndex] = dt_string
+                                        self.eventlogsbox.setText(self.listOfstudents[matchIndex]
+                                                                  + " your attendance has been recorded successfully")
+
+            else:
+                self.isAttendance = False
+                self.cap.release()
+                self.cameraoutput.clear()
+                self.startattendenceButton.setText("Start Attendance session")
+                self.startattendenceButton.setStyleSheet("background-color :#FCF6F5FF")
+         except Exception as e:
+            print(e)
 
     def Exporttoexcel(self):
         i = 0
