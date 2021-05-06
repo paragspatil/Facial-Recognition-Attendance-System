@@ -287,12 +287,13 @@ class Window(QDialog):
                             # print(label)
 
                             if label == "fake":
-                                self.eventlogsbox.setText("don't cheat attendance; serious action will be taken")
+
                                 fakeCount += 1
                                 if fakeCount > 9:
                                     frequency = 2500  # Set Frequency To 2500 Hertz
                                     duration = 2000  # Set Duration To 1000 ms == 1 second
                                     winsound.Beep(frequency, duration)
+                                    self.eventlogsbox.setText("don't cheat attendance; serious action will be taken")
 
                             elif label == "real":
                                 fakeCount = 0
