@@ -376,7 +376,7 @@ class Window(QDialog):
                 # it will print a connection object if everything is fine
                 cursor = db.cursor()
                 now = datetime.now()
-                dt_string = now.strftime("%d_%m_%Y%H_%M_%S")
+                dt_string = now.strftime("%d_%m_%Y_%H_%M_%S")
 
                 cursor.execute(
                     "CREATE TABLE " + dt_string + "(Roll_no INT(11) PRIMARY KEY,name VARCHAR(255), attendance_status "
@@ -837,6 +837,8 @@ class loginWindow(QDialog):
         self.initWindow()
 
     def initWindow(self):
+        self.setWindowIcon(QtGui.QIcon("resorces/face-recognition.png"))
+
         self.setWindowTitle("login")
         self.setGeometry(self.left, self.top, self.width, self.height)
         self.initUI()
@@ -908,6 +910,7 @@ class loginWindow(QDialog):
         self.isadminloggedin = False
         self.createaccdialog = QDialog()
         self.createaccdialog.setGeometry(500, 500, 500, 500)
+        self.createaccdialog.setWindowIcon(QtGui.QIcon("resorces/face-recognition.png"))
 
         self.adminusernamebox = QLineEdit(self.createaccdialog)
         self.adminusernamebox.setMaximumHeight(40)
@@ -975,7 +978,7 @@ class loginWindow(QDialog):
                 passwd=password,
 
             )
-            self.accountlable.setText("success! create a new acoount below")
+            self.accountlable.setText("success! create a new account below")
             self.isadminloggedin = True
 
 
@@ -1018,6 +1021,7 @@ class loginWindow(QDialog):
                     passwd=password,
 
                 )
+                open('logindetail.txt', 'w').close()
                 file = open("logindetail.txt", "r+")
                 file.writelines([username + "\n", password])
                 file.close()
